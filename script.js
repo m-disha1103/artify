@@ -1,6 +1,29 @@
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
+const canvas = new fabric.Canvas('canvas');
 
-// simple test drawing
-ctx.fillStyle = "yellow";
-ctx.fillRect(50, 50, 150, 100);
+// Add Text
+document.querySelectorAll("button")[0].onclick = () => {
+  const text = new fabric.Textbox("Edit me", {
+    left: 100,
+    top: 100,
+    fill: "black",
+    fontSize: 24
+  });
+  canvas.add(text);
+};
+
+// Add Rectangle
+document.querySelectorAll("button")[1].onclick = () => {
+  const rect = new fabric.Rect({
+    left: 150,
+    top: 150,
+    fill: "blue",
+    width: 100,
+    height: 100
+  });
+  canvas.add(rect);
+};
+
+// Clear Canvas
+document.querySelectorAll("button")[2].onclick = () => {
+  canvas.clear();
+};
