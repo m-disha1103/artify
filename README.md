@@ -1,2 +1,0 @@
-# artify
-canva-like site

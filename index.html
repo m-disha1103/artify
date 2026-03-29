@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artify - Modern Canvas Editor</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Top Toolbar -->
+        <header class="topbar">
+            <div class="logo">
+                <i class="fa-solid fa-palette"></i> Artify
+            </div>
+            
+            <div class="actions center-actions">
+                <button class="action-btn" id="undoBtn" title="Undo"><i class="fa-solid fa-rotate-left"></i></button>
+                <button class="action-btn" id="redoBtn" title="Redo"><i class="fa-solid fa-rotate-right"></i></button>
+                <div class="divider"></div>
+                <button class="action-btn" id="deleteBtn" title="Delete Selected"><i class="fa-solid fa-trash"></i></button>
+                <button class="action-btn" id="bringFwdBtn" title="Bring Forward"><i class="fa-solid fa-layer-group"></i><i class="fa-solid fa-arrow-up fa-xs fa-overlay"></i></button>
+                <button class="action-btn" id="sendBackBtn" title="Send Backward"><i class="fa-solid fa-layer-group"></i><i class="fa-solid fa-arrow-down fa-xs fa-overlay"></i></button>
+            </div>
+            
+            <div class="actions right-actions">
+                <button class="btn btn-danger" id="clearBtn"><i class="fa-solid fa-trash-can"></i> Clear</button>
+                <button class="btn btn-secondary" id="saveBtn"><i class="fa-solid fa-cloud-arrow-up"></i> Save</button>
+                <button class="btn btn-secondary" id="loadBtn"><i class="fa-solid fa-cloud-arrow-down"></i> Load</button>
+                <button class="btn btn-primary" id="downloadBtn"><i class="fa-solid fa-download"></i> Export</button>
+            </div>
+        </header>
+
+        <div class="main-workspace">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <div class="tool-section">
+                    <h3>Add Elements</h3>
+                    <div class="grid-buttons">
+                        <button class="tool-btn" id="addTextBtn"><i class="fa-solid fa-font"></i> Text</button>
+                        <button class="tool-btn" id="addRectBtn"><i class="fa-regular fa-square"></i> Rectangle</button>
+                        <button class="tool-btn" id="addCircleBtn"><i class="fa-regular fa-circle"></i> Circle</button>
+                        <button class="tool-btn" id="addTriangleBtn"><i class="fa-solid fa-caret-up"></i> Triangle</button>
+                        <button class="tool-btn" id="addLineBtn"><i class="fa-solid fa-minus"></i> Line</button>
+                        <button class="tool-btn" id="drawModeBtn"><i class="fa-solid fa-paint-brush"></i> Draw</button>
+                    </div>
+                </div>
+
+                <div class="tool-section">
+                    <h3>Upload Image</h3>
+                    <label class="upload-btn" for="imageUpload">
+                        <i class="fa-solid fa-image"></i> Choose Image
+                    </label>
+                    <input type="file" id="imageUpload" accept="image/*" style="display: none;">
+                </div>
+
+                <div class="tool-section properties-panel" id="propertiesPanel">
+                    <h3>Properties</h3>
+                    
+                    <div class="prop-group">
+                        <label>Color</label>
+                        <div class="color-picker-wrap">
+                            <input type="color" id="fillColor" value="#000000">
+                            <span id="hexValue">#000000</span>
+                        </div>
+                    </div>
+
+                    <div class="prop-group">
+                        <label>Opacity (<span id="opacityValueDisplay">100</span>%)</label>
+                        <input type="range" id="opacitySlider" min="0" max="1" step="0.05" value="1" style="width: 100%; margin-top: 8px; cursor: pointer;">
+                    </div>
+
+                    <div class="prop-group text-props" id="textProperties" style="display: none;">
+                        <label>Font Family</label>
+                        <select id="fontFamily">
+                            <option value="Inter">Inter</option>
+                            <option value="Arial">Arial</option>
+                            <option value="Times New Roman">Times New Roman</option>
+                            <option value="Courier New">Courier New</option>
+                            <option value="Georgia">Georgia</option>
+                            <option value="Comic Sans MS">Comic Sans MS</option>
+                        </select>
+                        
+                        <div class="prop-row">
+                            <div class="prop-half">
+                                <label>Size</label>
+                                <input type="number" id="fontSize" value="32" min="10" max="200">
+                            </div>
+                            <div class="prop-half format-btns">
+                                <button class="format-btn" id="boldBtn"><i class="fa-solid fa-bold"></i></button>
+                                <button class="format-btn" id="italicBtn"><i class="fa-solid fa-italic"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Canvas Area -->
+            <main class="canvas-container-wrapper">
+                <div class="canvas-shadowbox">
+                    <canvas id="canvas"></canvas>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Fabric JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+    <!-- App Script -->
+    <script src="script.js"></script>
+</body>
+</html>
