@@ -21,3 +21,13 @@ The goal of this project is to build a lightweight and simple graphic design exp
 📱 User-Friendly UI
 * Clean and minimal interface
 * Easy navigation
+
+>App Flow
+1. Home Screen
+   * Start designing
+2. Editor Screen
+   * Add images/text
+   * Customize layout
+
+<< The project is still in progress, and there is much work remaining. >>
+   
