@@ -16,25 +16,92 @@ document.addEventListener('DOMContentLoaded', () => {
     // Actions
     const undoBtn = document.getElementById('undoBtn');
     const redoBtn = document.getElementById('redoBtn');
+    const groupBtn = document.getElementById('groupBtn');
+    const ungroupBtn = document.getElementById('ungroupBtn');
+    const duplicateBtn = document.getElementById('duplicateBtn');
     const deleteBtn = document.getElementById('deleteBtn');
     const bringFwdBtn = document.getElementById('bringFwdBtn');
+    const bringToFrontBtn = document.getElementById('bringToFrontBtn');
     const sendBackBtn = document.getElementById('sendBackBtn');
+    const sendToBackBtn = document.getElementById('sendToBackBtn');
     
-    // Final Actions
-    const clearBtn = document.getElementById('clearBtn');
-    const saveBtn = document.getElementById('saveBtn');
-    const loadBtn = document.getElementById('loadBtn');
-    const downloadBtn = document.getElementById('downloadBtn');
+    // Alignment Actions
+    const alignLeftBtn = document.getElementById('alignLeftBtn');
+    const alignCenterXBtn = document.getElementById('alignCenterXBtn');
+    const alignRightBtn = document.getElementById('alignRightBtn');
+    const alignTopBtn = document.getElementById('alignTopBtn');
+    const alignCenterYBtn = document.getElementById('alignCenterYBtn');
+    const alignBottomBtn = document.getElementById('alignBottomBtn');
     
-    // Properties
+    // Theme & Export & Zoom
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+    const exportDropdownBtn = document.getElementById('exportDropdownBtn');
+    const exportDropdownContent = document.getElementById('exportDropdownContent');
+    const exportPng = document.getElementById('exportPng');
+    const exportJpeg = document.getElementById('exportJpeg');
+    const exportSvg = document.getElementById('exportSvg');
+    
+    const zoomOutBtn = document.getElementById('zoomOutBtn');
+    const zoomInBtn = document.getElementById('zoomInBtn');
+    const zoomResetBtn = document.getElementById('zoomResetBtn');
+    const zoomDisplay = document.getElementById('zoomDisplay');
+    const panModeBtn = document.getElementById('panModeBtn');
+    
+    // Properties Panels
+    const panelTitle = document.getElementById('panelTitle');
+    const canvasProps = document.getElementById('canvasProps');
+    const objectProps = document.getElementById('objectProps');
+    const strokeProperties = document.getElementById('strokeProperties');
+    const imageProperties = document.getElementById('imageProperties');
+    
+    // Brush Settings
+    const brushSettingsSection = document.getElementById('brushSettingsSection');
+    const brushType = document.getElementById('brushType');
+    const brushColor = document.getElementById('brushColor');
+    const brushColorHexValue = document.getElementById('brushColorHexValue');
+    const brushSizeSlider = document.getElementById('brushSizeSlider');
+    const brushSizeDisplay = document.getElementById('brushSizeDisplay');
+    
+    // Canvas Properties
+    const bgColor = document.getElementById('bgColor');
+    const bgHexValue = document.getElementById('bgHexValue');
+    const canvasWidth = document.getElementById('canvasWidth');
+    const canvasHeight = document.getElementById('canvasHeight');
+    
+    // Object Properties
+    const fillColorGroup = document.getElementById('fillColorGroup');
     const fillColor = document.getElementById('fillColor');
     const hexValue = document.getElementById('hexValue');
     const opacitySlider = document.getElementById('opacitySlider');
     const opacityValueDisplay = document.getElementById('opacityValueDisplay');
+    
+    // Stroke Properties
+    const strokeColor = document.getElementById('strokeColor');
+    const strokeHexValue = document.getElementById('strokeHexValue');
+    const strokeWidthSlider = document.getElementById('strokeWidthSlider');
+    const strokeWidthValue = document.getElementById('strokeWidthValue');
+    const strokeDashStyle = document.getElementById('strokeDashStyle');
+    
+    // Font Properties
     const fontFamily = document.getElementById('fontFamily');
     const fontSize = document.getElementById('fontSize');
     const boldBtn = document.getElementById('boldBtn');
     const italicBtn = document.getElementById('italicBtn');
+    const underlineBtn = document.getElementById('underlineBtn');
+    const strikeBtn = document.getElementById('strikeBtn');
+    const alignTextLeft = document.getElementById('alignTextLeft');
+    const alignTextCenter = document.getElementById('alignTextCenter');
+    const alignTextRight = document.getElementById('alignTextRight');
+    const alignTextJustify = document.getElementById('alignTextJustify');
+    const charSpacing = document.getElementById('charSpacing');
+    
+    // Image Filter Elements
+    const filterGrayscale = document.getElementById('filterGrayscale');
+    const filterSepia = document.getElementById('filterSepia');
+    const filterInvert = document.getElementById('filterInvert');
+    const filterVintage = document.getElementById('filterVintage');
+    const filterBlur = document.getElementById('filterBlur');
+    const blurVal = document.getElementById('blurVal');
     
     // History
     let history = [];
@@ -110,6 +177,108 @@ document.addEventListener('DOMContentLoaded', () => {
     canvas.on('object:modified', saveHistory);
     canvas.on('object:removed', saveHistory);
 
+    // --- Zoom & Pan Logic ---
+    let isPanning = false;
+    let isPanMode = false;
+    let isSpacePressed = false;
+    let lastPosX, lastPosY;
+
+    // Update Zoom display
+    function updateZoomDisplay() {
+        const zoom = Math.round(canvas.getZoom() * 100);
+        zoomDisplay.textContent = `${zoom}%`;
+    }
+
+    // Zoom Functions
+    function zoomTo(newZoom, point) {
+        // Clamp zoom between 10% and 500%
+        newZoom = Math.max(0.1, Math.min(5.0, newZoom));
+        
+        if (point) {
+            canvas.zoomToPoint(point, newZoom);
+        } else {
+            const center = canvas.getVpCenter();
+            canvas.zoomToPoint(new fabric.Point(center.x, center.y), newZoom);
+        }
+        updateZoomDisplay();
+    }
+
+    // Ctrl+Wheel Zoom at Pointer
+    canvas.on('mouse:wheel', function(opt) {
+        if (opt.e.ctrlKey) {
+            const delta = opt.e.deltaY;
+            let zoom = canvas.getZoom();
+            zoom *= 0.999 ** delta;
+            const point = new fabric.Point(opt.e.offsetX, opt.e.offsetY);
+            zoomTo(zoom, point);
+            opt.e.preventDefault();
+            opt.e.stopPropagation();
+        }
+    });
+
+    // Zoom Buttons
+    zoomInBtn.addEventListener('click', () => {
+        zoomTo(canvas.getZoom() + 0.1);
+    });
+
+    zoomOutBtn.addEventListener('click', () => {
+        zoomTo(canvas.getZoom() - 0.1);
+    });
+
+    zoomResetBtn.addEventListener('click', () => {
+        canvas.setZoom(1.0);
+        const vpt = canvas.viewportTransform;
+        vpt[4] = 0;
+        vpt[5] = 0;
+        canvas.requestRenderAll();
+        updateZoomDisplay();
+    });
+
+    // Pan Mode Button Toggle
+    panModeBtn.addEventListener('click', () => {
+        isPanMode = !isPanMode;
+        panModeBtn.classList.toggle('active', isPanMode);
+        if (isPanMode) {
+            canvas.defaultCursor = 'grab';
+            canvas.selection = false;
+            canvas.discardActiveObject().renderAll();
+        } else {
+            canvas.defaultCursor = 'default';
+            canvas.selection = true;
+        }
+    });
+
+    // Canvas Panning Events
+    canvas.on('mouse:down', function(opt) {
+        const e = opt.e;
+        if (isPanMode || isSpacePressed) {
+            isPanning = true;
+            canvas.defaultCursor = 'grabbing';
+            canvas.discardActiveObject().renderAll();
+            lastPosX = e.clientX;
+            lastPosY = e.clientY;
+        }
+    });
+
+    canvas.on('mouse:move', function(opt) {
+        if (isPanning) {
+            const e = opt.e;
+            const vpt = canvas.viewportTransform;
+            vpt[4] += e.clientX - lastPosX;
+            vpt[5] += e.clientY - lastPosY;
+            canvas.requestRenderAll();
+            lastPosX = e.clientX;
+            lastPosY = e.clientY;
+        }
+    });
+
+    canvas.on('mouse:up', function() {
+        if (isPanning) {
+            isPanning = false;
+            canvas.defaultCursor = (isPanMode || isSpacePressed) ? 'grab' : 'default';
+        }
+    });
+
     // --- Helper Functions ---
     function centerObject(obj) {
         canvas.add(obj);
@@ -120,16 +289,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updatePropertiesPanel() {
         const activeObj = canvas.getActiveObject();
+        
+        // Handle Group / Ungroup visibility
+        if (activeObj && activeObj.type === 'activeSelection') {
+            groupBtn.style.display = 'inline-block';
+            ungroupBtn.style.display = 'none';
+        } else if (activeObj && activeObj.type === 'group') {
+            groupBtn.style.display = 'none';
+            ungroupBtn.style.display = 'inline-block';
+        } else {
+            groupBtn.style.display = 'none';
+            ungroupBtn.style.display = 'none';
+        }
+        
         if (activeObj) {
-            propertiesPanel.classList.add('active');
+            panelTitle.textContent = 'Object Properties';
+            canvasProps.style.display = 'none';
+            objectProps.style.display = 'block';
             
             // Sync Fill Color
             if (activeObj.fill) {
-                let color = activeObj.fill;
+                let color = typeof activeObj.fill === 'string' ? activeObj.fill : '#000000';
                 if(activeObj.type === 'line' && activeObj.stroke) {
                     color = activeObj.stroke;
                 }
-                fillColor.value = color.length === 7 ? color : '#000000'; // Simple hex check
+                fillColor.value = color.length === 7 ? color : '#000000';
                 hexValue.textContent = fillColor.value.toUpperCase();
             }
 
@@ -137,6 +321,31 @@ document.addEventListener('DOMContentLoaded', () => {
             if (activeObj.opacity !== undefined) {
                 opacitySlider.value = activeObj.opacity;
                 opacityValueDisplay.textContent = Math.round(activeObj.opacity * 100);
+            }
+
+            // Sync Stroke properties
+            if (activeObj.type !== 'image') {
+                strokeProperties.style.display = 'block';
+                if (activeObj.stroke) {
+                    strokeColor.value = activeObj.stroke.length === 7 ? activeObj.stroke : '#000000';
+                    strokeHexValue.textContent = strokeColor.value.toUpperCase();
+                } else {
+                    strokeColor.value = '#000000';
+                    strokeHexValue.textContent = '#000000';
+                }
+                strokeWidthSlider.value = activeObj.strokeWidth || 0;
+                strokeWidthValue.textContent = activeObj.strokeWidth || 0;
+                
+                if (activeObj.strokeDashArray) {
+                    const dash = activeObj.strokeDashArray[0];
+                    if (dash === 10) strokeDashStyle.value = 'dashed';
+                    else if (dash === 2) strokeDashStyle.value = 'dotted';
+                    else strokeDashStyle.value = 'solid';
+                } else {
+                    strokeDashStyle.value = 'solid';
+                }
+            } else {
+                strokeProperties.style.display = 'none';
             }
 
             // Text Properties
@@ -150,12 +359,68 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 if (activeObj.fontStyle === 'italic') italicBtn.classList.add('active');
                 else italicBtn.classList.remove('active');
+
+                if (activeObj.underline) underlineBtn.classList.add('active');
+                else underlineBtn.classList.remove('active');
+
+                if (activeObj.linethrough) strikeBtn.classList.add('active');
+                else strikeBtn.classList.remove('active');
+
+                // Align Text buttons
+                const currentAlign = activeObj.textAlign || 'left';
+                alignTextLeft.classList.toggle('active', currentAlign === 'left');
+                alignTextCenter.classList.toggle('active', currentAlign === 'center');
+                alignTextRight.classList.toggle('active', currentAlign === 'right');
+                alignTextJustify.classList.toggle('active', currentAlign === 'justify');
+
+                charSpacing.value = activeObj.charSpacing || 0;
             } else {
                 textProperties.style.display = 'none';
             }
+
+            // Image Properties & Filter Sync
+            if (activeObj.type === 'image') {
+                imageProperties.style.display = 'block';
+                fillColorGroup.style.display = 'none';
+                
+                const getFilterIndex = (type) => {
+                    if (!activeObj.filters) return -1;
+                    return activeObj.filters.findIndex(f => f && f.type.toLowerCase() === type.toLowerCase());
+                };
+
+                const grayscaleIdx = getFilterIndex('grayscale');
+                const sepiaIdx = getFilterIndex('sepia');
+                const invertIdx = getFilterIndex('invert');
+                const vintageIdx = getFilterIndex('vintage');
+                const blurIdx = getFilterIndex('blur');
+
+                filterGrayscale.classList.toggle('active', grayscaleIdx > -1);
+                filterSepia.classList.toggle('active', sepiaIdx > -1);
+                filterInvert.classList.toggle('active', invertIdx > -1);
+                filterVintage.classList.toggle('active', vintageIdx > -1);
+
+                if (blurIdx > -1) {
+                    const blurValNum = activeObj.filters[blurIdx].blur || 0;
+                    filterBlur.value = Math.round(blurValNum * 20); // Scale up float 0-1 to slider scale
+                    blurVal.textContent = Math.round(blurValNum * 20);
+                } else {
+                    filterBlur.value = 0;
+                    blurVal.textContent = 0;
+                }
+            } else {
+                imageProperties.style.display = 'none';
+                fillColorGroup.style.display = 'block';
+            }
         } else {
-            propertiesPanel.classList.remove('active');
-            textProperties.style.display = 'none';
+            panelTitle.textContent = 'Canvas Properties';
+            canvasProps.style.display = 'block';
+            objectProps.style.display = 'none';
+            
+            // Sync Canvas Properties
+            bgColor.value = canvas.backgroundColor === '#ffffff' || !canvas.backgroundColor ? '#ffffff' : canvas.backgroundColor;
+            bgHexValue.textContent = bgColor.value.toUpperCase();
+            canvasWidth.value = canvas.width;
+            canvasHeight.value = canvas.height;
         }
     }
 
@@ -213,17 +478,56 @@ document.addEventListener('DOMContentLoaded', () => {
         centerObject(line);
     });
 
+    function setDrawingBrush() {
+        const type = brushType.value;
+        const color = brushColor.value;
+        const width = parseInt(brushSizeSlider.value, 10);
+        
+        if (type === 'Pencil') {
+            canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
+        } else if (type === 'Spray') {
+            canvas.freeDrawingBrush = new fabric.SprayBrush(canvas);
+        } else if (type === 'Circle') {
+            canvas.freeDrawingBrush = new fabric.CircleBrush(canvas);
+        }
+        
+        canvas.freeDrawingBrush.color = color;
+        canvas.freeDrawingBrush.width = width;
+    }
+
     drawModeBtn.addEventListener('click', () => {
         canvas.isDrawingMode = !canvas.isDrawingMode;
         if (canvas.isDrawingMode) {
             drawModeBtn.classList.add('active');
-            canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
-            canvas.freeDrawingBrush.color = fillColor.value;
-            canvas.freeDrawingBrush.width = 5;
+            setDrawingBrush();
             canvas.discardActiveObject();
             canvas.renderAll();
+            brushSettingsSection.style.display = 'block';
         } else {
             drawModeBtn.classList.remove('active');
+            brushSettingsSection.style.display = 'none';
+        }
+    });
+
+    brushType.addEventListener('change', () => {
+        if (canvas.isDrawingMode) {
+            setDrawingBrush();
+        }
+    });
+
+    brushColor.addEventListener('input', (e) => {
+        const val = e.target.value;
+        brushColorHexValue.textContent = val.toUpperCase();
+        if (canvas.isDrawingMode) {
+            canvas.freeDrawingBrush.color = val;
+        }
+    });
+
+    brushSizeSlider.addEventListener('input', (e) => {
+        const size = e.target.value;
+        brushSizeDisplay.textContent = size;
+        if (canvas.isDrawingMode) {
+            canvas.freeDrawingBrush.width = parseInt(size, 10);
         }
     });
 
@@ -255,6 +559,59 @@ document.addEventListener('DOMContentLoaded', () => {
     undoBtn.addEventListener('click', undo);
     redoBtn.addEventListener('click', redo);
 
+    function duplicate() {
+        const activeObject = canvas.getActiveObject();
+        if (!activeObject) return;
+        
+        activeObject.clone((cloned) => {
+            canvas.discardActiveObject();
+            cloned.set({
+                left: cloned.left + 20,
+                top: cloned.top + 20,
+                evented: true,
+            });
+            
+            if (cloned.type === 'activeSelection') {
+                cloned.canvas = canvas;
+                cloned.forEachObject((obj) => {
+                    canvas.add(obj);
+                });
+                cloned.setCoords();
+            } else {
+                canvas.add(cloned);
+            }
+            
+            canvas.setActiveObject(cloned);
+            canvas.requestRenderAll();
+            saveHistory();
+        });
+    }
+
+    duplicateBtn.addEventListener('click', duplicate);
+
+    function groupObjects() {
+        if (!canvas.getActiveObject()) return;
+        if (canvas.getActiveObject().type !== 'activeSelection') return;
+        
+        canvas.getActiveObject().toGroup();
+        canvas.requestRenderAll();
+        saveHistory();
+        updatePropertiesPanel();
+    }
+
+    function ungroupObjects() {
+        if (!canvas.getActiveObject()) return;
+        if (canvas.getActiveObject().type !== 'group') return;
+        
+        canvas.getActiveObject().toActiveSelection();
+        canvas.requestRenderAll();
+        saveHistory();
+        updatePropertiesPanel();
+    }
+
+    groupBtn.addEventListener('click', groupObjects);
+    ungroupBtn.addEventListener('click', ungroupObjects);
+
     deleteBtn.addEventListener('click', () => {
         const activeObjects = canvas.getActiveObjects();
         if (activeObjects.length) {
@@ -265,13 +622,28 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Keyboard support for delete
+    // Keyboard support for delete, duplicate, group, ungroup, zoom, pan, undo, redo
     window.addEventListener('keydown', (e) => {
-        if (e.key === 'Delete' || e.key === 'Backspace') {
-            // Prevent deletion if editing text
-            const activeObj = canvas.getActiveObject();
-            if (activeObj && activeObj.isEditing) return;
+        // Prevent keyboard shortcuts if editing text
+        const activeObj = canvas.getActiveObject();
+        if (activeObj && activeObj.isEditing) return;
 
+        // Undo (Ctrl+Z)
+        if ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'Z')) {
+            e.preventDefault();
+            undo();
+            return;
+        }
+
+        // Redo (Ctrl+Y)
+        if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || e.key === 'Y')) {
+            e.preventDefault();
+            redo();
+            return;
+        }
+
+        // Delete / Backspace
+        if (e.key === 'Delete' || e.key === 'Backspace') {
             const activeObjects = canvas.getActiveObjects();
             if (activeObjects.length) {
                 canvas.discardActiveObject();
@@ -280,13 +652,82 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
         }
+        
+        // Ctrl+D or Cmd+D for duplicate
+        if ((e.ctrlKey || e.metaKey) && (e.key === 'd' || e.key === 'D')) {
+            e.preventDefault();
+            duplicate();
+        }
+
+        // Ctrl+G or Cmd+G for group / ungroup
+        if ((e.ctrlKey || e.metaKey) && (e.key === 'g' || e.key === 'G')) {
+            e.preventDefault();
+            if (e.shiftKey) {
+                ungroupObjects();
+            } else {
+                groupObjects();
+            }
+        }
+
+        // Ctrl + (Zoom In)
+        if ((e.ctrlKey || e.metaKey) && e.key === '=') {
+            e.preventDefault();
+            zoomTo(canvas.getZoom() + 0.1);
+        }
+
+        // Ctrl - (Zoom Out)
+        if ((e.ctrlKey || e.metaKey) && e.key === '-') {
+            e.preventDefault();
+            zoomTo(canvas.getZoom() - 0.1);
+        }
+
+        // Ctrl 0 (Reset Zoom)
+        if ((e.ctrlKey || e.metaKey) && e.key === '0') {
+            e.preventDefault();
+            zoomResetBtn.click();
+        }
+
+        // Spacebar for panning
+        if (e.code === 'Space') {
+            const activeEl = document.activeElement;
+            const isEditingInput = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'SELECT' || activeEl.tagName === 'TEXTAREA');
+            if (!isEditingInput) {
+                e.preventDefault();
+                isSpacePressed = true;
+                canvas.defaultCursor = 'grab';
+                canvas.selection = false;
+                panModeBtn.classList.add('active');
+            }
+        }
+    });
+
+    window.addEventListener('keyup', (e) => {
+        if (e.code === 'Space') {
+            isSpacePressed = false;
+            if (!isPanMode) {
+                canvas.defaultCursor = 'default';
+                canvas.selection = true;
+                panModeBtn.classList.remove('active');
+            } else {
+                canvas.defaultCursor = 'grab';
+            }
+        }
     });
 
     bringFwdBtn.addEventListener('click', () => {
         const activeObj = canvas.getActiveObject();
         if (activeObj) {
             canvas.bringForward(activeObj);
-            saveHistory(); // Manual save for layer changes
+            saveHistory();
+        }
+    });
+
+    bringToFrontBtn.addEventListener('click', () => {
+        const activeObj = canvas.getActiveObject();
+        if (activeObj) {
+            canvas.bringToFront(activeObj);
+            canvas.renderAll();
+            saveHistory();
         }
     });
 
@@ -298,6 +739,56 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    sendToBackBtn.addEventListener('click', () => {
+        const activeObj = canvas.getActiveObject();
+        if (activeObj) {
+            canvas.sendToBack(activeObj);
+            canvas.renderAll();
+            saveHistory();
+        }
+    });
+
+    // Object Alignment Functions
+    function alignObject(direction) {
+        const activeObj = canvas.getActiveObject();
+        if (!activeObj) return;
+
+        const canvasWidth = canvas.width;
+        const canvasHeight = canvas.height;
+        const bound = activeObj.getBoundingRect();
+
+        switch (direction) {
+            case 'left':
+                activeObj.set({ left: activeObj.left - bound.left });
+                break;
+            case 'centerX':
+                canvas.centerObjectH(activeObj);
+                break;
+            case 'right':
+                activeObj.set({ left: activeObj.left + (canvasWidth - (bound.left + bound.width)) });
+                break;
+            case 'top':
+                activeObj.set({ top: activeObj.top - bound.top });
+                break;
+            case 'centerY':
+                canvas.centerObjectV(activeObj);
+                break;
+            case 'bottom':
+                activeObj.set({ top: activeObj.top + (canvasHeight - (bound.top + bound.height)) });
+                break;
+        }
+        activeObj.setCoords();
+        canvas.renderAll();
+        saveHistory();
+    }
+
+    alignLeftBtn.addEventListener('click', () => alignObject('left'));
+    alignCenterXBtn.addEventListener('click', () => alignObject('centerX'));
+    alignRightBtn.addEventListener('click', () => alignObject('right'));
+    alignTopBtn.addEventListener('click', () => alignObject('top'));
+    alignCenterYBtn.addEventListener('click', () => alignObject('centerY'));
+    alignBottomBtn.addEventListener('click', () => alignObject('bottom'));
+
     clearBtn.addEventListener('click', () => {
         if (confirm('Are you sure you want to clear the canvas? This cannot be undone.')) {
             canvas.clear();
@@ -306,6 +797,32 @@ document.addEventListener('DOMContentLoaded', () => {
             historyIndex = -1;
             saveHistory();
         }
+    });
+
+    // --- Canvas Properties Logic ---
+    bgColor.addEventListener('input', (e) => {
+        const color = e.target.value;
+        bgHexValue.textContent = color.toUpperCase();
+        canvas.backgroundColor = color;
+        canvas.renderAll();
+    });
+    
+    bgColor.addEventListener('change', () => {
+        saveHistory();
+    });
+
+    canvasWidth.addEventListener('change', (e) => {
+        let width = parseInt(e.target.value, 10);
+        if (width < 100) width = 100;
+        canvas.setWidth(width);
+        saveHistory();
+    });
+
+    canvasHeight.addEventListener('change', (e) => {
+        let height = parseInt(e.target.value, 10);
+        if (height < 100) height = 100;
+        canvas.setHeight(height);
+        saveHistory();
     });
 
     // --- Properties Logic ---
@@ -361,6 +878,75 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // --- Stroke Properties Logic ---
+    strokeColor.addEventListener('input', (e) => {
+        const val = e.target.value;
+        strokeHexValue.textContent = val.toUpperCase();
+        const activeObjects = canvas.getActiveObjects();
+        let changed = false;
+        activeObjects.forEach(obj => {
+            if (obj.type !== 'image') {
+                obj.set('stroke', val);
+                changed = true;
+            }
+        });
+        if (changed) {
+            canvas.renderAll();
+        }
+    });
+
+    strokeColor.addEventListener('change', () => {
+        const activeObjects = canvas.getActiveObjects();
+        if (activeObjects.length > 0) {
+            saveHistory();
+        }
+    });
+
+    strokeWidthSlider.addEventListener('input', (e) => {
+        const val = parseInt(e.target.value, 10);
+        strokeWidthValue.textContent = val;
+        const activeObjects = canvas.getActiveObjects();
+        let changed = false;
+        activeObjects.forEach(obj => {
+            if (obj.type !== 'image') {
+                obj.set('strokeWidth', val);
+                changed = true;
+            }
+        });
+        if (changed) {
+            canvas.renderAll();
+        }
+    });
+
+    strokeWidthSlider.addEventListener('change', () => {
+        const activeObjects = canvas.getActiveObjects();
+        if (activeObjects.length > 0) {
+            saveHistory();
+        }
+    });
+
+    strokeDashStyle.addEventListener('change', (e) => {
+        const style = e.target.value;
+        const activeObjects = canvas.getActiveObjects();
+        let changed = false;
+        activeObjects.forEach(obj => {
+            if (obj.type !== 'image') {
+                let dashArray = null;
+                if (style === 'dashed') {
+                    dashArray = [10, 5];
+                } else if (style === 'dotted') {
+                    dashArray = [2, 4];
+                }
+                obj.set('strokeDashArray', dashArray);
+                changed = true;
+            }
+        });
+        if (changed) {
+            canvas.renderAll();
+            saveHistory();
+        }
+    });
+
     fontFamily.addEventListener('change', (e) => {
         const activeObj = canvas.getActiveObject();
         if (activeObj && (activeObj.type === 'i-text' || activeObj.type === 'text')) {
@@ -396,6 +982,58 @@ document.addEventListener('DOMContentLoaded', () => {
             const isItalic = activeObj.fontStyle === 'italic';
             activeObj.set('fontStyle', isItalic ? 'normal' : 'italic');
             italicBtn.classList.toggle('active');
+            canvas.renderAll();
+            saveHistory();
+        }
+    });
+
+    // --- Enhanced Text Properties Logic ---
+    underlineBtn.addEventListener('click', () => {
+        const activeObj = canvas.getActiveObject();
+        if (activeObj && (activeObj.type === 'i-text' || activeObj.type === 'text')) {
+            const isUnderline = activeObj.underline;
+            activeObj.set('underline', !isUnderline);
+            underlineBtn.classList.toggle('active', !isUnderline);
+            canvas.renderAll();
+            saveHistory();
+        }
+    });
+
+    strikeBtn.addEventListener('click', () => {
+        const activeObj = canvas.getActiveObject();
+        if (activeObj && (activeObj.type === 'i-text' || activeObj.type === 'text')) {
+            const isStrike = activeObj.linethrough;
+            activeObj.set('linethrough', !isStrike);
+            strikeBtn.classList.toggle('active', !isStrike);
+            canvas.renderAll();
+            saveHistory();
+        }
+    });
+
+    function setTextAlignment(align) {
+        const activeObj = canvas.getActiveObject();
+        if (activeObj && (activeObj.type === 'i-text' || activeObj.type === 'text')) {
+            activeObj.set('textAlign', align);
+            
+            alignTextLeft.classList.toggle('active', align === 'left');
+            alignTextCenter.classList.toggle('active', align === 'center');
+            alignTextRight.classList.toggle('active', align === 'right');
+            alignTextJustify.classList.toggle('active', align === 'justify');
+            
+            canvas.renderAll();
+            saveHistory();
+        }
+    }
+
+    alignTextLeft.addEventListener('click', () => setTextAlignment('left'));
+    alignTextCenter.addEventListener('click', () => setTextAlignment('center'));
+    alignTextRight.addEventListener('click', () => setTextAlignment('right'));
+    alignTextJustify.addEventListener('click', () => setTextAlignment('justify'));
+
+    charSpacing.addEventListener('change', (e) => {
+        const activeObj = canvas.getActiveObject();
+        if (activeObj && (activeObj.type === 'i-text' || activeObj.type === 'text')) {
+            activeObj.set('charSpacing', parseInt(e.target.value, 10));
             canvas.renderAll();
             saveHistory();
         }

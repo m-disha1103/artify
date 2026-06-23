@@ -20,19 +20,41 @@
             </div>
             
             <div class="actions center-actions">
-                <button class="action-btn" id="undoBtn" title="Undo"><i class="fa-solid fa-rotate-left"></i></button>
-                <button class="action-btn" id="redoBtn" title="Redo"><i class="fa-solid fa-rotate-right"></i></button>
+                <button class="action-btn" id="undoBtn" title="Undo (Ctrl+Z)"><i class="fa-solid fa-rotate-left"></i></button>
+                <button class="action-btn" id="redoBtn" title="Redo (Ctrl+Y)"><i class="fa-solid fa-rotate-right"></i></button>
                 <div class="divider"></div>
-                <button class="action-btn" id="deleteBtn" title="Delete Selected"><i class="fa-solid fa-trash"></i></button>
+                <button class="action-btn" id="groupBtn" title="Group (Ctrl+G)" style="display: none;"><i class="fa-solid fa-object-group"></i></button>
+                <button class="action-btn" id="ungroupBtn" title="Ungroup (Ctrl+Shift+G)" style="display: none;"><i class="fa-solid fa-object-ungroup"></i></button>
+                <button class="action-btn" id="duplicateBtn" title="Duplicate (Ctrl+D)"><i class="fa-regular fa-copy"></i></button>
+                <button class="action-btn" id="deleteBtn" title="Delete Selected (Del)"><i class="fa-solid fa-trash"></i></button>
+                <div class="divider"></div>
                 <button class="action-btn" id="bringFwdBtn" title="Bring Forward"><i class="fa-solid fa-layer-group"></i><i class="fa-solid fa-arrow-up fa-xs fa-overlay"></i></button>
+                <button class="action-btn" id="bringToFrontBtn" title="Bring to Front"><i class="fa-solid fa-layer-group"></i><i class="fa-solid fa-angles-up fa-xs fa-overlay"></i></button>
                 <button class="action-btn" id="sendBackBtn" title="Send Backward"><i class="fa-solid fa-layer-group"></i><i class="fa-solid fa-arrow-down fa-xs fa-overlay"></i></button>
+                <button class="action-btn" id="sendToBackBtn" title="Send to Back"><i class="fa-solid fa-layer-group"></i><i class="fa-solid fa-angles-down fa-xs fa-overlay"></i></button>
+                <div class="divider"></div>
+                <button class="action-btn" id="alignLeftBtn" title="Align Left"><i class="fa-solid fa-align-left"></i></button>
+                <button class="action-btn" id="alignCenterXBtn" title="Align Horizontal Center"><i class="fa-solid fa-align-center"></i></button>
+                <button class="action-btn" id="alignRightBtn" title="Align Right"><i class="fa-solid fa-align-right"></i></button>
+                <button class="action-btn" id="alignTopBtn" title="Align Top"><i class="fa-solid fa-align-left" style="transform: rotate(90deg);"></i></button>
+                <button class="action-btn" id="alignCenterYBtn" title="Align Vertical Center"><i class="fa-solid fa-align-center" style="transform: rotate(90deg);"></i></button>
+                <button class="action-btn" id="alignBottomBtn" title="Align Bottom"><i class="fa-solid fa-align-right" style="transform: rotate(90deg);"></i></button>
             </div>
             
             <div class="actions right-actions">
+                <button class="action-btn" id="themeToggleBtn" title="Toggle Dark/Light Mode"><i class="fa-solid fa-moon"></i></button>
+                <div class="divider"></div>
                 <button class="btn btn-danger" id="clearBtn"><i class="fa-solid fa-trash-can"></i> Clear</button>
                 <button class="btn btn-secondary" id="saveBtn"><i class="fa-solid fa-cloud-arrow-up"></i> Save</button>
                 <button class="btn btn-secondary" id="loadBtn"><i class="fa-solid fa-cloud-arrow-down"></i> Load</button>
-                <button class="btn btn-primary" id="downloadBtn"><i class="fa-solid fa-download"></i> Export</button>
+                <div class="dropdown">
+                    <button class="btn btn-primary" id="exportDropdownBtn"><i class="fa-solid fa-download"></i> Export <i class="fa-solid fa-chevron-down fa-xs" style="margin-left: 2px;"></i></button>
+                    <div class="dropdown-content" id="exportDropdownContent">
+                        <a href="#" id="exportPng"><i class="fa-regular fa-file-image"></i> PNG Image</a>
+                        <a href="#" id="exportJpeg"><i class="fa-regular fa-file-image"></i> JPEG Image</a>
+                        <a href="#" id="exportSvg"><i class="fa-regular fa-file-code"></i> SVG Vector</a>
+                    </div>
+                </div>
             </div>
         </header>
 
@@ -59,41 +81,145 @@
                     <input type="file" id="imageUpload" accept="image/*" style="display: none;">
                 </div>
 
-                <div class="tool-section properties-panel" id="propertiesPanel">
-                    <h3>Properties</h3>
-                    
+                <div class="tool-section" id="brushSettingsSection" style="display: none;">
+                    <h3>Brush Settings</h3>
                     <div class="prop-group">
-                        <label>Color</label>
+                        <label>Brush Type</label>
+                        <select id="brushType">
+                            <option value="Pencil">Pencil</option>
+                            <option value="Spray">Spray</option>
+                            <option value="Circle">Circle</option>
+                        </select>
+                    </div>
+                    <div class="prop-group">
+                        <label>Brush Color</label>
                         <div class="color-picker-wrap">
-                            <input type="color" id="fillColor" value="#000000">
-                            <span id="hexValue">#000000</span>
+                            <input type="color" id="brushColor" value="#6366f1">
+                            <span id="brushColorHexValue">#6366F1</span>
+                        </div>
+                    </div>
+                    <div class="prop-group">
+                        <label>Brush Size (<span id="brushSizeDisplay">5</span>px)</label>
+                        <input type="range" id="brushSizeSlider" min="1" max="80" value="5" style="width: 100%; cursor: pointer;">
+                    </div>
+                </div>
+
+                <div class="tool-section properties-panel active" id="propertiesPanel">
+                    <h3 id="panelTitle">Canvas Properties</h3>
+                    
+                    <div id="canvasProps" style="display: block;">
+                        <div class="prop-group">
+                            <label>Background Color</label>
+                            <div class="color-picker-wrap">
+                                <input type="color" id="bgColor" value="#ffffff">
+                                <span id="bgHexValue">#FFFFFF</span>
+                            </div>
+                        </div>
+                        <div class="prop-row">
+                            <div class="prop-half">
+                                <label>Width</label>
+                                <input type="number" id="canvasWidth" value="800">
+                            </div>
+                            <div class="prop-half">
+                                <label>Height</label>
+                                <input type="number" id="canvasHeight" value="600">
+                            </div>
                         </div>
                     </div>
 
-                    <div class="prop-group">
-                        <label>Opacity (<span id="opacityValueDisplay">100</span>%)</label>
-                        <input type="range" id="opacitySlider" min="0" max="1" step="0.05" value="1" style="width: 100%; margin-top: 8px; cursor: pointer;">
-                    </div>
-
-                    <div class="prop-group text-props" id="textProperties" style="display: none;">
-                        <label>Font Family</label>
-                        <select id="fontFamily">
-                            <option value="Inter">Inter</option>
-                            <option value="Arial">Arial</option>
-                            <option value="Times New Roman">Times New Roman</option>
-                            <option value="Courier New">Courier New</option>
-                            <option value="Georgia">Georgia</option>
-                            <option value="Comic Sans MS">Comic Sans MS</option>
-                        </select>
-                        
-                        <div class="prop-row">
-                            <div class="prop-half">
-                                <label>Size</label>
-                                <input type="number" id="fontSize" value="32" min="10" max="200">
+                    <div id="objectProps" style="display: none;">
+                        <div class="prop-group" id="fillColorGroup">
+                            <label>Fill Color</label>
+                            <div class="color-picker-wrap">
+                                <input type="color" id="fillColor" value="#000000">
+                                <span id="hexValue">#000000</span>
                             </div>
-                            <div class="prop-half format-btns">
-                                <button class="format-btn" id="boldBtn"><i class="fa-solid fa-bold"></i></button>
-                                <button class="format-btn" id="italicBtn"><i class="fa-solid fa-italic"></i></button>
+                        </div>
+
+                        <!-- Stroke/Border Properties -->
+                        <div class="prop-group" id="strokeProperties">
+                            <label>Stroke / Outline</label>
+                            <div class="color-picker-wrap" style="margin-bottom: 8px;">
+                                <input type="color" id="strokeColor" value="#000000">
+                                <span id="strokeHexValue">#000000</span>
+                            </div>
+                            <div class="prop-row">
+                                <div class="prop-half">
+                                    <label>Width (<span id="strokeWidthValue">0</span>px)</label>
+                                    <input type="range" id="strokeWidthSlider" min="0" max="30" step="1" value="0" style="width: 100%; cursor: pointer;">
+                                </div>
+                                <div class="prop-half">
+                                    <label>Stroke Style</label>
+                                    <select id="strokeDashStyle">
+                                        <option value="solid">Solid</option>
+                                        <option value="dashed">Dashed</option>
+                                        <option value="dotted">Dotted</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="prop-group">
+                            <label>Opacity (<span id="opacityValueDisplay">100</span>%)</label>
+                            <input type="range" id="opacitySlider" min="0" max="1" step="0.05" value="1" style="width: 100%; margin-top: 8px; cursor: pointer;">
+                        </div>
+
+                        <!-- Enhanced Text Properties -->
+                        <div class="prop-group text-props" id="textProperties" style="display: none;">
+                            <label>Font Family</label>
+                            <select id="fontFamily">
+                                <option value="Inter">Inter</option>
+                                <option value="Arial">Arial</option>
+                                <option value="Times New Roman">Times New Roman</option>
+                                <option value="Courier New">Courier New</option>
+                                <option value="Georgia">Georgia</option>
+                                <option value="Comic Sans MS">Comic Sans MS</option>
+                            </select>
+                            
+                            <div class="prop-row">
+                                <div class="prop-half">
+                                    <label>Size</label>
+                                    <input type="number" id="fontSize" value="32" min="10" max="200">
+                                </div>
+                                <div class="prop-half format-btns">
+                                    <button class="format-btn" id="boldBtn" title="Bold"><i class="fa-solid fa-bold"></i></button>
+                                    <button class="format-btn" id="italicBtn" title="Italic"><i class="fa-solid fa-italic"></i></button>
+                                    <button class="format-btn" id="underlineBtn" title="Underline"><i class="fa-solid fa-underline"></i></button>
+                                    <button class="format-btn" id="strikeBtn" title="Strikethrough"><i class="fa-solid fa-strikethrough"></i></button>
+                                </div>
+                            </div>
+
+                            <div class="prop-row">
+                                <div class="prop-half">
+                                    <label>Text Align</label>
+                                    <div class="format-btns">
+                                        <button class="format-btn text-align-btn" id="alignTextLeft" title="Align Left"><i class="fa-solid fa-align-left"></i></button>
+                                        <button class="format-btn text-align-btn" id="alignTextCenter" title="Align Center"><i class="fa-solid fa-align-center"></i></button>
+                                        <button class="format-btn text-align-btn" id="alignTextRight" title="Align Right"><i class="fa-solid fa-align-right"></i></button>
+                                        <button class="format-btn text-align-btn" id="alignTextJustify" title="Justify"><i class="fa-solid fa-align-justify"></i></button>
+                                    </div>
+                                </div>
+                                <div class="prop-half">
+                                    <label>Letter Spacing</label>
+                                    <input type="number" id="charSpacing" value="0" step="5" min="-20" max="200">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Image Filters Panel -->
+                        <div class="prop-group" id="imageProperties" style="display: none;">
+                            <label>Image Filters</label>
+                            <div class="filter-grid">
+                                <button class="filter-btn" id="filterGrayscale">Grayscale</button>
+                                <button class="filter-btn" id="filterSepia">Sepia</button>
+                                <button class="filter-btn" id="filterInvert">Invert</button>
+                                <button class="filter-btn" id="filterVintage">Vintage</button>
+                            </div>
+                            <div class="prop-row" style="margin-top: 10px;">
+                                <div style="width: 100%;">
+                                    <label>Blur (<span id="blurVal">0</span>px)</label>
+                                    <input type="range" id="filterBlur" min="0" max="20" step="1" value="0" style="width: 100%; cursor: pointer;">
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -102,6 +228,15 @@
 
             <!-- Canvas Area -->
             <main class="canvas-container-wrapper">
+                <!-- Floating Zoom & Pan Controls -->
+                <div class="zoom-controls">
+                    <button class="zoom-btn" id="zoomOutBtn" title="Zoom Out (Ctrl+-)"><i class="fa-solid fa-minus"></i></button>
+                    <span id="zoomDisplay">100%</span>
+                    <button class="zoom-btn" id="zoomInBtn" title="Zoom In (Ctrl++)"><i class="fa-solid fa-plus"></i></button>
+                    <button class="zoom-btn" id="zoomResetBtn" title="Reset Zoom (Ctrl+0)"><i class="fa-solid fa-arrows-to-eye"></i></button>
+                    <div class="zoom-divider"></div>
+                    <button class="zoom-btn" id="panModeBtn" title="Pan Mode (Hold Spacebar + Drag or toggle)"><i class="fa-solid fa-hand"></i></button>
+                </div>
                 <div class="canvas-shadowbox">
                     <canvas id="canvas"></canvas>
                 </div>
