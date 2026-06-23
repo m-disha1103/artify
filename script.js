@@ -1039,8 +1039,89 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // --- Image Filters Logic ---
+    filterGrayscale.addEventListener('click', () => {
+        toggleImageFilter('grayscale', new fabric.Image.filters.Grayscale());
+    });
+
+    filterSepia.addEventListener('click', () => {
+        toggleImageFilter('sepia', new fabric.Image.filters.Sepia());
+    });
+
+    filterInvert.addEventListener('click', () => {
+        toggleImageFilter('invert', new fabric.Image.filters.Invert());
+    });
+
+    filterVintage.addEventListener('click', () => {
+        toggleImageFilter('vintage', new fabric.Image.filters.Vintage());
+    });
+
+    filterBlur.addEventListener('input', (e) => {
+        const val = parseInt(e.target.value, 10);
+        blurVal.textContent = val;
+        applyBlurFilter(val);
+    });
+
+    filterBlur.addEventListener('change', () => {
+        saveHistory();
+    });
+
+    function toggleImageFilter(filterType, filterInstance) {
+        const activeObj = canvas.getActiveObject();
+        if (!activeObj || activeObj.type !== 'image') return;
+        
+        const filterIdx = activeObj.filters.findIndex(f => f && f.type.toLowerCase() === filterType.toLowerCase());
+        if (filterIdx > -1) {
+            activeObj.filters.splice(filterIdx, 1);
+        } else {
+            activeObj.filters.push(filterInstance);
+        }
+        activeObj.applyFilters();
+        canvas.renderAll();
+        saveHistory();
+        updatePropertiesPanel();
+    }
+
+    function applyBlurFilter(val) {
+        const activeObj = canvas.getActiveObject();
+        if (!activeObj || activeObj.type !== 'image') return;
+        
+        const filterIdx = activeObj.filters.findIndex(f => f && f.type.toLowerCase() === 'blur');
+        if (val === 0) {
+            if (filterIdx > -1) {
+                activeObj.filters.splice(filterIdx, 1);
+            }
+        } else {
+            const blurValFloat = val / 20;
+            if (filterIdx > -1) {
+                activeObj.filters[filterIdx].blur = blurValFloat;
+            } else {
+                activeObj.filters.push(new fabric.Image.filters.Blur({ blur: blurValFloat }));
+            }
+        }
+        activeObj.applyFilters();
+        canvas.renderAll();
+    }
+
     // --- Save/Load/Export ---
     const STORAGE_KEY = 'artify_design_v1';
+    
+    // Theme switch logic
+    const currentTheme = localStorage.getItem('artify_theme') || 'light';
+    if (currentTheme === 'dark') {
+        document.body.classList.add('dark-theme');
+        themeToggleBtn.innerHTML = '<i class="fa-solid fa-sun"></i>';
+    } else {
+        document.body.classList.remove('dark-theme');
+        themeToggleBtn.innerHTML = '<i class="fa-solid fa-moon"></i>';
+    }
+
+    themeToggleBtn.addEventListener('click', () => {
+        document.body.classList.toggle('dark-theme');
+        const isDark = document.body.classList.contains('dark-theme');
+        localStorage.setItem('artify_theme', isDark ? 'dark' : 'light');
+        themeToggleBtn.innerHTML = isDark ? '<i class="fa-solid fa-sun"></i>' : '<i class="fa-solid fa-moon"></i>';
+    });
 
     saveBtn.addEventListener('click', () => {
         const json = JSON.stringify(canvas.toJSON());
@@ -1077,23 +1158,59 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    downloadBtn.addEventListener('click', () => {
-        // Deselect objects to avoid showing bounding boxes
-        canvas.discardActiveObject();
-        canvas.renderAll();
+    // Dropdown toggle
+    exportDropdownBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        exportDropdownContent.classList.toggle('show');
+    });
 
+    window.addEventListener('click', (e) => {
+        if (!e.target.matches('#exportDropdownBtn') && !e.target.closest('#exportDropdownBtn')) {
+            exportDropdownContent.classList.remove('show');
+        }
+    });
+
+    function downloadFile(url, filename) {
+        const link = document.createElement('a');
+        link.download = filename;
+        link.href = url;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    exportPng.addEventListener('click', (e) => {
+        e.preventDefault();
+        exportDropdownContent.classList.remove('show');
+        canvas.discardActiveObject().renderAll();
         const dataURL = canvas.toDataURL({
             format: 'png',
             quality: 1,
             multiplier: 2 // High resolution export
         });
+        downloadFile(dataURL, 'artify-design.png');
+    });
 
-        const link = document.createElement('a');
-        link.download = 'artify-design.png';
-        link.href = dataURL;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+    exportJpeg.addEventListener('click', (e) => {
+        e.preventDefault();
+        exportDropdownContent.classList.remove('show');
+        canvas.discardActiveObject().renderAll();
+        const dataURL = canvas.toDataURL({
+            format: 'jpeg',
+            quality: 0.95,
+            multiplier: 2 // High resolution export
+        });
+        downloadFile(dataURL, 'artify-design.jpg');
+    });
+
+    exportSvg.addEventListener('click', (e) => {
+        e.preventDefault();
+        exportDropdownContent.classList.remove('show');
+        canvas.discardActiveObject().renderAll();
+        const svgData = canvas.toSVG();
+        const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        downloadFile(url, 'artify-design.svg');
     });
 
     // Initial button state
